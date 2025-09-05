@@ -23,7 +23,7 @@ class StackFrame (
     val routine: Routine,
     val operandStack: Stack<Int> = Stack(),
     val localVariables: MutableList<Int> = mutableListOf(),
-    val returnVal: Int = 0
+    var returnVal: Int = 0
 )
 
 

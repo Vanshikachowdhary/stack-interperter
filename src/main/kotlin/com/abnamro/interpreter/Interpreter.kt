@@ -1,10 +1,10 @@
 package com.abnamro.interpreter
 
-import java.util.*
+import java.util.Stack
 
 class Interpreter {
-    public val allRoutines = mutableMapOf<String, Routine>()
-    val instructionFactory = InstructionFactory()
+    val allRoutines = mutableMapOf<String, Routine>()
+    private val instructionFactory = InstructionFactory()
     val callStack = Stack<StackFrame>()
 
     fun parseRoutine(input: String): Routine {
@@ -15,9 +15,9 @@ class Interpreter {
         val routineInstructions = inputAsList.drop(2)
 
         for (routineInstruction in routineInstructions) {
-                actualInstruction.add(instructionFactory.parseInstructions(routineInstruction))
+            actualInstruction.add(instructionFactory.parseInstructions(routineInstruction))
         }
-        return Routine(functionName, actualInstruction,numArgument)
+        return Routine(functionName, actualInstruction, numArgument)
     }
 
     fun loadRoutines(input: List<String>) {
@@ -27,52 +27,25 @@ class Interpreter {
         }
     }
 
-    fun executeRoutine(routine: Routine) {
+    fun executeRoutine(routine: Routine, args: List<Int> = emptyList()) {
         val frame = StackFrame(routine)
         callStack.push(frame)
-        routine.operations.forEach { operation -> operation.execute(frame) }
 
+        args.forEach { frame.operandStack.add(it) }
+
+        routine.operations.forEach { operation ->
+            if (operation is Instructions.Invoke) {
+                val routine = allRoutines[operation.functionName]
+                    ?: throw IllegalArgumentException("$operation is not a valid routine")
+
+                val arguments = (0..<routine.numArguments).map { frame.operandStack.pop() }
+
+                executeRoutine(routine, arguments)
+                val returnValue = callStack.pop().returnVal
+                frame.operandStack.add(returnValue)
+            }
+            else operation.execute(frame)
+        }
+        //    TODO() = initial method frame is still on the stack
     }
-
-
-//    fun startExecution(functionName: String): Unit {
-//        val routine = allRoutines[functionName]?:throw Exception("$functionName is not found")
-//        callStack.push(StackFrame(functionName))
-////        executeRoutine(routine)
-//        }
-
-//    fun executeRoutine(routine: Routine) {
-//        val currentFrame = callStack.peek()
-//        for (instr in routine.operations) {
-//            when (instr) {
-//                is InstructionType.
-//                else -> {
-//                    instructionFactory.executeInstructions(instr)
-//
-//                }
-//            }
-//
-//}
-}
-
-
-val addMethodBytecode = """
-    fun add
-    arguments=2
-    I_LOAD(5)
-    I_LOAD(8)
-    I_ADD
-    I_PRINT
-    """
-val mainMethodBytecode = """
-    fun main
-    I_Load()
-    fun add
-    """
-
-fun main() {
-    val myWholeCodeBase = listOf(addMethodBytecode, mainMethodBytecode)
-    val interpreter = Interpreter()
-    interpreter.loadRoutines(myWholeCodeBase)
-//    interpreter.startExecution("add")
 }

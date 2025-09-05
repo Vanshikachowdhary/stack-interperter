@@ -1,9 +1,6 @@
 package com.abnamro.interpreter
 
-import net.bytebuddy.matcher.ElementMatchers.any
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.MapEntry
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class InterpreterTest {
@@ -53,5 +50,65 @@ class InterpreterTest {
         assertThat(interpreter.allRoutines).containsKey("main")
         val routine = interpreter.allRoutines["main"]!!
         interpreter.executeRoutine(routine)
+    }
+
+    @Test
+    fun test3() {
+        val input = """
+            fun sum
+            arguments=0
+            I_LOAD 3
+            I_LOAD 5
+            I_ADD
+            I_PRINT
+        """.trimIndent()
+
+
+        val mainMethodBytecode = """
+            fun main
+            arguments=0
+            I_LOAD 7
+            I_LOAD 7
+            I_ADD
+            INVOKE sum
+            I_ADD
+            """.trimIndent()
+
+        val interpreter = Interpreter()
+        interpreter.loadRoutines(listOf(input, mainMethodBytecode))
+        assertThat(interpreter.allRoutines).containsKey("main")
+        val routine = interpreter.allRoutines["main"]!!
+        val res = interpreter.executeRoutine(routine)
+        println(res)
+    }
+
+    @Test
+    fun test4() {
+        val input = """
+            fun addition
+            arguments=2
+            I_ADD
+            I_RETURN
+        """.trimIndent()
+
+        val mainMethodBytecode = """
+            fun main
+            arguments=0
+            I_LOAD 7
+            I_LOAD 13
+            INVOKE addition
+            """.trimIndent()
+
+        val interpreter = Interpreter()
+        interpreter.loadRoutines(listOf(input, mainMethodBytecode))
+        val routine = interpreter.allRoutines["main"]!!
+
+        interpreter.executeRoutine(routine)
+
+        assertThat(interpreter.allRoutines).containsKey("main")
+        assertThat(interpreter.allRoutines).containsKey("addition")
+        assertThat(interpreter.callStack.size).isEqualTo(1)
+        assertThat(interpreter.callStack.peek().operandStack.peek()).isEqualTo(20)
+
     }
 }

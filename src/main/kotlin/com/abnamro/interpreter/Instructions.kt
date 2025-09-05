@@ -7,7 +7,16 @@ class Instructions {
 
     data class Invoke(val functionName: String) : InstructionType {
         override fun stackEffect() = 0
-        override fun execute(frame: StackFrame){}
+        override fun execute(frame: StackFrame){
+            throw IllegalArgumentException("should never be executed")
+        }
+    }
+
+    object I_Return: InstructionType {
+        override fun stackEffect() = -1
+        override fun execute(frame: StackFrame) {
+            frame.returnVal = frame.operandStack.pop()
+        }
     }
 
     object I_Equals : InstructionType {
@@ -15,6 +24,14 @@ class Instructions {
         override fun execute(frame: StackFrame) {
             val res = frame.operandStack.pop() == frame.operandStack.pop()
             frame.operandStack.add(if (res) 1 else 0)
+        }
+    }
+
+    object I_CMPG : InstructionType {
+        override fun stackEffect() = 1
+        override fun execute(frame: StackFrame) {
+            val res = frame.operandStack.pop() > frame.operandStack.pop()
+            frame.returnVal = if (res) 1 else 0
         }
     }
 
@@ -35,7 +52,7 @@ class Instructions {
     object I_Add : InstructionType {
         override fun stackEffect() = -1
         override fun execute(frame: StackFrame) {
-            frame.operandStack.push(frame.operandStack.pop() + frame.operandStack.pop())
+            frame.returnVal = frame.operandStack.push(frame.operandStack.pop() + frame.operandStack.pop())
         }
     }
 
@@ -52,7 +69,7 @@ class Instructions {
     object I_Subtract : InstructionType {
         override fun stackEffect() = -1
         override fun execute(frame: StackFrame) {
-            frame.operandStack.push(frame.operandStack.pop() - frame.operandStack.pop())
+            frame.returnVal = frame.operandStack.push(frame.operandStack.pop() - frame.operandStack.pop())
         }
     }
 
@@ -63,18 +80,25 @@ class Instructions {
             val a = getLongVal(frame.operandStack)
             val result = b - a
             pushLongVal(result, frame.operandStack)
+            frame.returnVal = result.toInt()
         }
     }
 
     object I_Print : InstructionType {
         override fun stackEffect() = -1
-        override fun execute(frame: StackFrame) = println(frame.operandStack.pop())
+        override fun execute(frame: StackFrame)  {
+            val popedVal =frame.operandStack.pop()
+            frame.returnVal = popedVal
+            println(popedVal)
+        }
     }
 
     object L_Print : InstructionType {
         override fun stackEffect(): Int = -2
         override fun execute(frame: StackFrame) {
-            println(getLongVal(frame.operandStack))
+            val popedVal = getLongVal(frame.operandStack)
+            frame.returnVal = popedVal.toInt()
+            println(popedVal)
         }
     }
 }
